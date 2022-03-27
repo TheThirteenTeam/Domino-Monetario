@@ -9,3 +9,6 @@ class Domino(arcade.Sprite): # Sprite/Objeto domino
         self.rightFace = rightFace
         self.isUpSide = True
         self.angle = 90
+
+    def set_sprite(self, leftFace, rightFace):
+        self.texture = arcade.load_texture(f"images/domino{leftFace}_{rightFace}.png")

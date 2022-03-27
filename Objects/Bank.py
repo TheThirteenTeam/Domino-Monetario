@@ -30,3 +30,12 @@ class Bank: # Objeto Banco (Lista de objetos dominos)
         # Remove, and append to the end
         self.bankList.remove(domino)
         self.bankList.append(domino)
+
+    def turn_dominos(self, side):
+        for dom in self.bankList:
+            if side == "Up":
+                dom.texture = arcade.load_texture(f"images/domino{dom.leftFace}_{dom.rightFace}.png")
+                dom.update()
+            elif side == "Down":
+                dom.texture = arcade.load_texture(f"images/dominoBack.png")
+                dom.update()

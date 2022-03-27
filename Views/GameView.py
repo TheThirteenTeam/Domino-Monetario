@@ -11,6 +11,9 @@ class GameView(arcade.View):
     def __init__(self):
         super().__init__()
 
+        # Background image will be stored in this variable
+        self.background = None
+
         # Game Objects
         self.Bank = None
         self.Player1 = None
@@ -22,6 +25,8 @@ class GameView(arcade.View):
         self.held_domino_original_position = None
 
     def setup(self):
+
+        self.background = arcade.load_texture("images/backgroundTest.png")
 
         # Player Mouse Actions
         self.held_domino = []
@@ -35,7 +40,8 @@ class GameView(arcade.View):
         # Adiciona todos os dominos possíveis no banco
         for i, left_domino_value in enumerate(gConst.DOMINOS_VALUES):
             for j, right_domino_value in enumerate(gConst.DOMINOS_VALUES):
-                if i <= j:
+                print(left_domino_value, "_", right_domino_value)
+                if i >= j:
                     domino = Domino.Domino(left_domino_value, right_domino_value, gConst.DOMINO_SCALE)
                     self.Bank.add_domino(domino) # Adiciona o domino ao banco
         self.Bank.shuffle() # Embaralha o banco
@@ -68,9 +74,12 @@ class GameView(arcade.View):
         # Configurações iniciais dos objetos
         self.Bank.set_position(gConst.BANK_X, gConst.BANK_Y)
         self.Player1.set_position(0, gConst.SCREEN_HEIGHT / 8)
-        self.Player2.set_position(0, (gConst.SCREEN_HEIGHT / 8) * 7.5)
+        self.Player2.set_position(0, gConst.SCREEN_HEIGHT)
         self.Bank.set_angle(0)
+        self.Player1.set_angle(80)
+        self.Player2.set_angle(80)
         self.Player2.turn_dominos("Down")
+        self.Bank.turn_dominos("Down")
 
     def on_show(self):
         self.setup()
@@ -81,6 +90,10 @@ class GameView(arcade.View):
         self.clear()
         arcade.start_render()
         # Draw the objects in the screen
+        # Draw the background texture
+        arcade.draw_lrwh_rectangle_textured(0, 0,
+                                            gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT,
+                                            self.background)
         self.Bank.bankList.draw()
         self.Player1.playerHand.draw()
         self.Player2.playerHand.draw()
@@ -115,7 +128,7 @@ class GameView(arcade.View):
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
         """ User moves mouse """
-
+        domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
         # If we are holding cards, move them with the mouse
         for domino in self.held_domino:
             domino.center_x += dx
