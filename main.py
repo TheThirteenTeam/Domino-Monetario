@@ -7,6 +7,7 @@ import arcade
 # Game Imports
 import gameConstants as gConst
 from Views import MenuView
+from Views import GameView
 
 def main():
     # Create Window
@@ -14,6 +15,7 @@ def main():
     window.set_viewport(0, gConst.SCREEN_WIDTH, 0, gConst.SCREEN_HEIGHT)
     # Starts Menu View
     window.show_view(MenuView.MenuView())
+    #window.show_view(GameView.GameView("AStar"))
     arcade.run()
 
 if __name__ == "__main__":
