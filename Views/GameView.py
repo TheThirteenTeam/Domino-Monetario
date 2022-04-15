@@ -38,13 +38,12 @@ class GameView(arcade.View):
 
         # Game Objects
         self.Bank = None
-        self.Player1 = None
-        self.Player2 = None
-        self.GameTable = None
+        self.Player1 = Player.Player()
+        self.Player2 = Player.Player(self.opponentAlgorithm)
+        self.GameTable = GameTable.GameTable(gConst.DOMINO_MAX_HALF, chooseFirstPlayer(self.Player1, self.Player2), gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2)
 
         # Player Mouse Actions
         self.held_domino = None
-        self.held_screen = False
         self.last_domino_scale = None
 
         # Camera
@@ -63,8 +62,6 @@ class GameView(arcade.View):
 
         # Create Game Objects
         self.Bank = Bank.Bank()
-        self.Player1 = Player.Player()
-        self.Player2 = Player.Player(self.opponentAlgorithm)
 
         # Adiciona todos os dominos possíveis no banco
         for i, left_domino_value in enumerate(zip(gConst.DOMINOS_VALUES, gConst.DOMINOS_VALUES_FLOAT)):
@@ -87,22 +84,15 @@ class GameView(arcade.View):
             self.Player2.add_domino(self.Bank.bankList[sort]) # adiciona domino na mão do player 2
             self.Bank.remove_domino(self.Bank.bankList[sort]) # remove o domino do banco
 
-        self.camera_sprites.move_to([0, 0])
-
         # Cria objeto do game
-        Dplaceholder1 = Domino.Domino("pholder", 0, "pholder", 0, gConst.DOMINO_SCALE)
-        Dplaceholder2 = Domino.Domino("pholder", 0, "pholder", 0, gConst.DOMINO_SCALE)
-        Dplaceholder3 = Domino.Domino("pholder", 0, "pholder", 0, gConst.DOMINO_SCALE)
-        self.GameTable = GameTable.GameTable(gConst.DOMINO_MAX_HALF, chooseFirstPlayer(self.Player1, self.Player2), gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2)
-        self.GameTable.add_domino(Dplaceholder1)
-        self.GameTable.add_domino(Dplaceholder2)
-        self.GameTable.add_domino(Dplaceholder3)
-        self.GameTable.currentPlayer = self.Player1
+        Dplaceholder = Domino.Domino("pholder", 0, "pholder", 0, gConst.DOMINO_SCALE)
+        self.GameTable.add_dom_to_end(Dplaceholder)
+        self.GameTable.currentPlayer = self.Player1 # REMOVER PRA VERSÃO FINAL
 
         # Configurações iniciais dos objetos
         self.Bank.set_position(gConst.BANK_X, gConst.BANK_Y)
-        self.Player1.set_position(0, gConst.SCREEN_HEIGHT / 8)
-        self.Player2.set_position(0, gConst.SCREEN_HEIGHT)
+        self.Player1.set_position(0, gConst.SCREEN_HEIGHT / 12)
+        self.Player2.set_position(0, gConst.SCREEN_HEIGHT + 50)
         self.Player1.set_angle(60)
         self.Player2.set_angle(60)
         self.Bank.set_angle(90)
@@ -116,48 +106,99 @@ class GameView(arcade.View):
         arcade.start_render()
         # Draw the objects in the screen
         self.camera_sprites.use()
-        arcade.draw_lrwh_rectangle_textured(0 - gConst.SCREEN_WIDTH / 2, 0 - gConst.SCREEN_HEIGHT / 2, gConst.SCREEN_WIDTH * 2, gConst.SCREEN_HEIGHT * 2, self.background)
+        arcade.draw_lrwh_rectangle_textured(0, 0, gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT, self.background)
         self.GameTable.tableList.draw()
+        self.GameTable.tableList.draw_hit_boxes()
 
         self.camera_gui.use()
+        arcade.draw_text("Informações:", gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 35, font_size=25, bold=True)
+        arcade.draw_text("Rodada: " + str(self.GameTable.gameRound) + " Jogada: " + str(self.GameTable.gamePlay), gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 65)
+
         self.Bank.bankList.draw()
-        arcade.draw_text("Banco", gConst.BANK_X - gConst.DOMINO_HEIGHT / 2 - 15, gConst.BANK_Y + gConst.DOMINO_WIDTH / 2 + 35, font_size=26)
+        self.Bank.bankList.draw_hit_boxes()
+        arcade.draw_text("Banco", gConst.BANK_X - gConst.DOMINO_HEIGHT / 2 - 15, gConst.BANK_Y + gConst.DOMINO_WIDTH / 2 + 35, font_size=25, bold=True)
+
         self.Player2.playerHand.draw()
+        arcade.draw_text("Jogador 2", 20, gConst.SCREEN_HEIGHT - 35, font_size=25, bold=True)
+        arcade.draw_text("Poupança: " + str(self.Player2.savings), 20, gConst.SCREEN_HEIGHT - 65)
+        arcade.draw_text("Dominos na mão: " + str(len(self.Player2.playerHand)), 20, gConst.SCREEN_HEIGHT - 95)
+
         self.Player1.playerHand.draw()
+        arcade.draw_text("Jogador 1", 20, 90, font_size=25, bold=True)
+        arcade.draw_text("Poupança: " + str(self.Player1.savings), 20, 60)
+        arcade.draw_text("Dominos na mão: " + str(len(self.Player1.playerHand)), 20, 30)
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         if self.GameTable.currentPlayer == self.Player1:
             domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
             if len(domino) > 0:
                 self.held_domino = [domino[-1]]
-        if len(self.held_domino) == 0:
-            self.held_screen = True
+
+            compraDom = arcade.get_sprites_at_point((x, y), self.Bank.bankList)
+            if compraDom: self.Bank.buy_domino(self.Player1)
+
+    def on_update(self, deltatime):
+        if len(self.Player1.playerHand) == 0:
+            print("Jogador 1 ganhou a rodada.")
+            self.GameTable.gameRound += 1
+            for dom in self.Player2.playerHand:
+                self.Player1.savings += dom.leftFaceNum + dom.rightFaceNum
+            self.setup()
+        if len(self.Player2.playerHand) == 0:
+            print("Jogador 2 ganhou a rodada.")
+            self.GameTable.gameRound += 1
+            for dom in self.Player1.playerHand:
+                self.Player2.savings += dom.leftFaceNum + dom.rightFaceNum
+            self.setup()
+        if self.GameTable.currentPlayer == self.Player2:
+            print("Jogador 2 faz a jogada")
+            self.GameTable.currentPlayer = self.Player1
+            return
 
     def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
+
+        def computarJogada():
+            self.Player1.remove_domino(self.held_domino[0])
+            self.GameTable.gamePlay += 1
+            self.GameTable.currentPlayer = self.Player2
+            self.GameTable.print_list()
+
         # If we don't have any dominos, who cares
-        self.held_screen = False
         if len(self.held_domino) == 0:
             return
-        # If we find a placeholder
-        # Find the closest pile, in case we are in contact with more than one
-        dom = arcade.get_sprites_at_point((x, y), self.GameTable.tableList)
-        print(dom)
-        if arcade.check_for_collision_with_list(self.held_domino[0], self.GameTable.tableList):
-            print("Jogado")
-            self.Player1.remove_domino(self.held_domino[0])
-        else:
-            print("Erro")
+        dom, distance = arcade.get_closest_sprite(self.held_domino[0], self.GameTable.tableList)
+        if arcade.check_for_collision(self.held_domino[0], dom):
+            if dom.leftFace == "pholder":
+                if len(self.GameTable.tableList) == 1:
+                    self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
+                    self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
+                    dom.update_domino(self.held_domino[0])
+                    computarJogada()
+                else:
+                    if dom.leftFaceNum == -2:
+                        posDomValue = self.GameTable.tableList[1].leftFaceNum
+                        if posDomValue == self.held_domino[0].leftFaceNum or posDomValue == self.held_domino[0].rightFaceNum:
+                            self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
+                            dom.update_domino(self.held_domino[0])
+                            if posDomValue == self.held_domino[0].leftFaceNum:
+                                print("Turn right")
+                                dom.reverse_domino()
+                            computarJogada()
+                    if dom.leftFaceNum == -1:
+                        posDomValue = self.GameTable.tableList[len(self.GameTable.tableList) - 2].rightFaceNum
+                        if posDomValue == self.held_domino[0].leftFaceNum or posDomValue == self.held_domino[0].rightFaceNum:
+                            self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
+                            dom.update_domino(self.held_domino[0])
+                            if posDomValue == self.held_domino[0].rightFaceNum:
+                                print("Turn left")
+                                dom.reverse_domino()
+                            computarJogada()
+
         self.Player1.desEmphasize()
         self.Player1.readjustment_hand_position()
         self.held_domino = []
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
-        if self.held_screen:
-            newXPos = self.camera_sprites.position[0] - dx * gConst.SCREEN_MULTIPLIER
-            newYPos = self.camera_sprites.position[1] - dy * gConst.SCREEN_MULTIPLIER
-            if (0 < newXPos < 0) and (0 < newXPos < 0):
-                self.camera_sprites.move_to((newXPos, newYPos), gConst.CAMERA_SPEED)
-        else:
             # Player 1 - play time
             if self.GameTable.currentPlayer == self.Player1:
                 domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)

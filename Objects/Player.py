@@ -50,8 +50,7 @@ class Player: # Objeto Player (Lista de objetos dominos)
 
     ''' GreedySearch
         1 - Jogar as duplas primeiro.
-        2 - Jogar a peça de valor mais alto. (É bom pro inimigo que tenha peças altas na minha mão por causa da poupança)
-        3 - Jogar peças com valores dupliacados.
+        2 - Jogar a peça de valor mais alto. (É bom pro inimigo que tenha peças altas na minha mão por causa da poupança) 
     '''
     def greedySearchHeuristic(self, gameList):
         for dom in self.playerHand:
@@ -59,8 +58,8 @@ class Player: # Objeto Player (Lista de objetos dominos)
 
     ''' AStar
         1 - Jogar as duplas primeiro.
-        2 - Jogar a peça de valor mais alto. (É bom pro inimigo que tenha peças altas na minha mão por causa da poupança)
-        3 - Jogar peças com valores dupliacados.
+        2 - Jogar peças que já estiverem em quantidade na mesa.
+        3 - Jogar a peça de valor mais alto. (É bom pro inimigo que tenha peças altas na minha mão por causa da poupança)
     '''
     def aStarHeuristic(self, gameList):
         for dom in self.playerHand:

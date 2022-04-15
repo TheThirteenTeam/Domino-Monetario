@@ -19,7 +19,11 @@ class Bank: # Objeto Banco (Lista de objetos dominos)
         self.bankList.remove(domino)
 
     def buy_domino(self, player):
-        player.playerHand += self.bankList.pop()
+        dom = self.bankList.pop()
+        dom.turn_domino("Up")
+        dom.set_angle(60)
+        player.playerHand.append(dom)
+        player.readjustment_hand_position()
 
     def set_angle(self, value):
         for dom in self.bankList:
