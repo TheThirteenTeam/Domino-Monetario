@@ -109,7 +109,7 @@ class GameView(arcade.View):
         arcade.start_render()
         # Draw the objects in the screen
         self.camera_sprites.use()
-        arcade.draw_lrwh_rectangle_textured(0, 0, gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT, self.background)
+        arcade.draw_lrwh_rectangle_textured(0, 0 - gConst.SCREEN_HEIGHT, gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT * 3, self.background)
 
 
         self.camera_gui.use()
@@ -152,15 +152,13 @@ class GameView(arcade.View):
             return
 
     def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
-        self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED)), 1)
-        newPos = self.GameTable.cY - (scroll_y * gConst.SCROLL_SPEED)
-        for dom in self.GameTable.tableList:
-            dom.center_y = newPos - (self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED))
-        self.GameTable.cY_flutuante = self.GameTable.tableList[0].center_y
-        print("center_y: ", self.GameTable.tableList[0].center_y)
-        print("center_y_flutuante: ", self.GameTable.cY_flutuante)
-        print("Posição da camera: ", self.camera_sprites.position[1])
-        self.GameTable.tableList.update()
+        if 0 - gConst.SCREEN_HEIGHT < self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED) < gConst.SCREEN_HEIGHT:
+            self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED)), 1)
+            newPos = self.GameTable.cY - (scroll_y * gConst.SCROLL_SPEED)
+            for dom in self.GameTable.tableList:
+                dom.center_y = newPos - (self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED))
+            self.GameTable.cY_flutuante = self.GameTable.tableList[0].center_y
+            self.GameTable.tableList.update()
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         if self.GameTable.currentPlayer == self.Player1:

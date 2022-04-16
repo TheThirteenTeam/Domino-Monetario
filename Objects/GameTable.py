@@ -39,7 +39,7 @@ class GameTable: # Objeto Game (Lista de objetos dominos)
 
     def readjustment_table_position(self):
         for i, dom in enumerate(self.tableList):
-            dom.scale = 0.07
+            dom.scale = 0.10
             if len(self.tableList) % 2 == 0: # par
                 dom_at_enter = ((len(self.tableList) / 2) + .5) - 1
                 if i < dom_at_enter:
