@@ -23,6 +23,9 @@ class Domino(arcade.Sprite): # Sprite/Objeto domino
     def set_position(self, x, y):
         self.position = x, y
 
+    def update(self):
+        self.center_y = self.center_y
+
     def set_angle(self, value):
         self.angle = value
 

@@ -3,7 +3,6 @@ import random
 from Objects import Bank
 from Objects import Player
 from Objects import Domino
-from Objects import Placeholder
 from Objects import GameTable
 import gameConstants as gConst
 
@@ -50,12 +49,16 @@ class GameView(arcade.View):
         self.camera_sprites = arcade.Camera(gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT)
         self.camera_gui = arcade.Camera(gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT)
 
+        self.logo = arcade.load_texture("images/domino_monetario_logo.png")
+
         self.setup()
 
     def setup(self):
 
         # Background texture
         self.background = arcade.load_texture("images/backgroundTest.png")
+
+        print(gConst.SCREEN_HEIGHT)
 
         # Player Mouse Actions
         self.held_domino = []
@@ -107,43 +110,28 @@ class GameView(arcade.View):
         # Draw the objects in the screen
         self.camera_sprites.use()
         arcade.draw_lrwh_rectangle_textured(0, 0, gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT, self.background)
-        self.GameTable.tableList.draw()
-        self.GameTable.tableList.draw_hit_boxes()
+
 
         self.camera_gui.use()
-        arcade.draw_text("Informações:", gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 35, font_size=25, bold=True)
-        arcade.draw_text("Rodada: " + str(self.GameTable.gameRound) + " Jogada: " + str(self.GameTable.gamePlay), gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 65)
+        self.GameTable.tableList.draw()
+        self.GameTable.tableList.draw_hit_boxes()
+        arcade.draw_scaled_texture_rectangle(gConst.SCREEN_WIDTH * 0.92, gConst.SCREEN_HEIGHT * 0.1, texture=self.logo, scale=0.13)
+        arcade.draw_text("Informações", gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 40, font_size=22, bold=True, font_name="Kenney Pixel Square")
+        arcade.draw_text("Rodada: " + str(self.GameTable.gameRound) + " / Jogada: " + str(self.GameTable.gamePlay), gConst.SCREEN_WIDTH - 300, gConst.SCREEN_HEIGHT - 70, font_size=17)
 
         self.Bank.bankList.draw()
         self.Bank.bankList.draw_hit_boxes()
-        arcade.draw_text("Banco", gConst.BANK_X - gConst.DOMINO_HEIGHT / 2 - 15, gConst.BANK_Y + gConst.DOMINO_WIDTH / 2 + 35, font_size=25, bold=True)
+        arcade.draw_text("Banco", gConst.BANK_X - gConst.DOMINO_HEIGHT / 2 - 15, gConst.BANK_Y + gConst.DOMINO_WIDTH / 2 + 35, font_size=22, bold=True, font_name="Kenney Pixel Square")
 
         self.Player2.playerHand.draw()
-        arcade.draw_text("Jogador 2", 20, gConst.SCREEN_HEIGHT - 35, font_size=25, bold=True)
-        arcade.draw_text("Poupança: " + str(self.Player2.savings), 20, gConst.SCREEN_HEIGHT - 65)
-        arcade.draw_text("Dominos na mão: " + str(len(self.Player2.playerHand)), 20, gConst.SCREEN_HEIGHT - 95)
+        arcade.draw_text("Jogador 2", 20, gConst.SCREEN_HEIGHT - 40, font_size=22, bold=True, font_name="Kenney Pixel Square")
+        arcade.draw_text("Poupança: " + str(self.Player2.savings), 20, gConst.SCREEN_HEIGHT - 70, font_size=17)
+        arcade.draw_text("Dominos na mão: " + str(len(self.Player2.playerHand)), 20, gConst.SCREEN_HEIGHT - 100, font_size=17)
 
         self.Player1.playerHand.draw()
-        arcade.draw_text("Jogador 1", 20, 90, font_size=25, bold=True)
-        arcade.draw_text("Poupança: " + str(self.Player1.savings), 20, 60)
-        arcade.draw_text("Dominos na mão: " + str(len(self.Player1.playerHand)), 20, 30)
-
-    def on_mouse_press(self, x, y, button, key_modifiers):
-        if self.GameTable.currentPlayer == self.Player1:
-            domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
-            if len(domino) > 0:
-                self.held_domino = [domino[-1]]
-
-            compraDom = arcade.get_sprites_at_point((x, y), self.Bank.bankList)
-            if compraDom: self.Bank.buy_domino(self.Player1)
-
-    def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
-        print(scroll_y)
-        self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * 5)), 1)
-        self.GameTable.centerY -= (scroll_y * 5)
-        for dom in self.GameTable.tableList:
-            dom.center_y -= (scroll_y * 5)
-
+        arcade.draw_text("Jogador 1", 20, 90, font_size=22, bold=True, font_name="Kenney Pixel Square")
+        arcade.draw_text("Poupança: " + str(self.Player1.savings), 20, 60, font_size=17)
+        arcade.draw_text("Dominos na mão: " + str(len(self.Player1.playerHand)), 20, 30, font_size=17)
 
     def on_update(self, deltatime):
         if len(self.Player1.playerHand) == 0:
@@ -163,8 +151,26 @@ class GameView(arcade.View):
             self.GameTable.currentPlayer = self.Player1
             return
 
-    def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
+    def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
+        self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED)), 1)
+        newPos = self.GameTable.cY - (scroll_y * gConst.SCROLL_SPEED)
+        for dom in self.GameTable.tableList:
+            dom.center_y = newPos - (self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED))
+        self.GameTable.cY_flutuante = self.GameTable.tableList[0].center_y
+        print("center_y: ", self.GameTable.tableList[0].center_y)
+        print("center_y_flutuante: ", self.GameTable.cY_flutuante)
+        print("Posição da camera: ", self.camera_sprites.position[1])
+        self.GameTable.tableList.update()
 
+    def on_mouse_press(self, x, y, button, key_modifiers):
+        if self.GameTable.currentPlayer == self.Player1:
+            domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
+            if len(domino) > 0:
+                self.held_domino = [domino[-1]]
+            compraDom = arcade.get_sprites_at_point((x, y), self.Bank.bankList)
+            if compraDom: self.Bank.buy_domino(self.Player1)
+
+    def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
         def computarJogada():
             self.Player1.remove_domino(self.held_domino[0])
             self.GameTable.gamePlay += 1
@@ -174,6 +180,7 @@ class GameView(arcade.View):
         # If we don't have any dominos, who cares
         if len(self.held_domino) == 0:
             return
+
         dom, distance = arcade.get_closest_sprite(self.held_domino[0], self.GameTable.tableList)
         if arcade.check_for_collision(self.held_domino[0], dom):
             if dom.leftFace == "pholder":

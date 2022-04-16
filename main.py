@@ -7,7 +7,7 @@ import arcade
 # Game Imports
 import gameConstants as gConst
 from Views import MenuView
-from Views import GameView
+#from Views import GameView
 
 def main():
     # Create Window

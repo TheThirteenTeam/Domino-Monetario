@@ -14,6 +14,8 @@ class DifficultView(arcade.View):
         self.game_view = None
         self.v_box = None
         self.background = arcade.load_texture("images/backgroundTest.png")
+        self.logo = arcade.load_texture("images/domino_monetario_logo.png")
+        self.dominozin = arcade.load_texture("images/dominozin.png")
 
     def on_show(self):
         """Called when switching to this view."""
@@ -22,9 +24,9 @@ class DifficultView(arcade.View):
         self.manager.enable()
         self.v_box = arcade.gui.UIBoxLayout()
 
-        button_style = {"bg_color": (35, 161, 75), "font_size": 20, "border_width": 2, "border_color": (21, 97, 45)}
+        button_style = {"bg_color": (35, 161, 75), "font_size": 20, "font_name":"Kenney Pixel Square", "border_width": 2, "border_color": (21, 97, 45)}
 
-        difficulty_label = arcade.gui.UILabel(text="Selecionar Dificuldade", font_size=48, bold=True, text_color=[255, 255, 255], align="center")
+        difficulty_label = arcade.gui.UILabel(text="Selecionar Dificuldade", font_size=48, bold=True, font_name="Kenney Pixel Square", text_color=[255, 255, 255], align="center")
         easy_button = arcade.gui.UIFlatButton(text="Facil", height=75, width=250, style=button_style)
         easy_button.on_click = self.easy_game_click
         hard_button = arcade.gui.UIFlatButton(text="Dificil", height=75, width=250, style=button_style)
@@ -52,7 +54,9 @@ class DifficultView(arcade.View):
         if not self.clicked:
             self.manager.draw()
         else:
-            arcade.draw_text("Carregando... ({}%)".format(self.counter), 0, gConst.SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=48, width=gConst.SCREEN_WIDTH, align="center")
+            arcade.draw_scaled_texture_rectangle(gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.77, texture=self.logo, scale=0.3)
+            arcade.draw_scaled_texture_rectangle(gConst.SCREEN_WIDTH * 0.95, gConst.SCREEN_HEIGHT * 0.1, texture=self.dominozin, scale=0.2)
+            arcade.draw_text("Carregando... ({}%)".format(self.counter), 0, gConst.SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=48, font_name="Kenney Pixel Square", width=gConst.SCREEN_WIDTH, align="center")
             self.counter += 2
 
         if self.counter == 100 and self.clicked == "Easy":
