@@ -137,6 +137,14 @@ class GameView(arcade.View):
             compraDom = arcade.get_sprites_at_point((x, y), self.Bank.bankList)
             if compraDom: self.Bank.buy_domino(self.Player1)
 
+    def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
+        print(scroll_y)
+        self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * 5)), 1)
+        self.GameTable.centerY -= (scroll_y * 5)
+        for dom in self.GameTable.tableList:
+            dom.center_y -= (scroll_y * 5)
+
+
     def on_update(self, deltatime):
         if len(self.Player1.playerHand) == 0:
             print("Jogador 1 ganhou a rodada.")
