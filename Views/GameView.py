@@ -1,5 +1,6 @@
 import arcade
 import random
+from Views import MenuView
 from Objects import Bank
 from Objects import Player
 from Objects import Domino
@@ -37,9 +38,10 @@ class GameView(arcade.View):
 
         # Game Objects
         self.Bank = None
-        self.Player1 = Player.Player()
-        self.Player2 = Player.Player(self.opponentAlgorithm)
+        self.Player1 = Player.Player("Player 1")
+        self.Player2 = Player.Player("Player 2", self.opponentAlgorithm)
         self.GameTable = GameTable.GameTable(gConst.DOMINO_MAX_HALF, chooseFirstPlayer(self.Player1, self.Player2), gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2)
+        self.Vencedor = None
 
         # Player Mouse Actions
         self.held_domino = None
@@ -50,7 +52,6 @@ class GameView(arcade.View):
         self.camera_gui = arcade.Camera(gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT)
 
         self.logo = arcade.load_texture("images/domino_monetario_logo.png")
-
         self.setup()
 
     def setup(self):
@@ -58,7 +59,7 @@ class GameView(arcade.View):
         # Background texture
         self.background = arcade.load_texture("images/backgroundTest.png")
 
-        print(gConst.SCREEN_HEIGHT)
+        print(self.GameTable.currentPlayer.name, "começa o jogo.")
 
         # Player Mouse Actions
         self.held_domino = []
@@ -90,7 +91,6 @@ class GameView(arcade.View):
         # Cria objeto do game
         Dplaceholder = Domino.Domino("pholder", 0, "pholder", 0, gConst.DOMINO_SCALE)
         self.GameTable.add_dom_to_end(Dplaceholder)
-        self.GameTable.currentPlayer = self.Player1 # REMOVER PRA VERSÃO FINAL
 
         # Configurações iniciais dos objetos
         self.Bank.set_position(gConst.BANK_X, gConst.BANK_Y)
@@ -101,6 +101,7 @@ class GameView(arcade.View):
         self.Bank.set_angle(90)
         self.Player2.turn_dominos("Down")
         self.Bank.turn_dominos("Down")
+        self.GameTable.currentPlayer = chooseFirstPlayer(self.Player1, self.Player2)
 
     def on_draw(self):
         """ Render the screen. """
@@ -109,8 +110,7 @@ class GameView(arcade.View):
         arcade.start_render()
         # Draw the objects in the screen
         self.camera_sprites.use()
-        arcade.draw_lrwh_rectangle_textured(0, 0 - gConst.SCREEN_HEIGHT, gConst.SCREEN_WIDTH, gConst.SCREEN_HEIGHT * 3, self.background)
-
+        arcade.draw_lrwh_rectangle_textured(0 - gConst.SCREEN_WIDTH * 6, 0, gConst.SCREEN_WIDTH * 13, gConst.SCREEN_HEIGHT, self.background)
 
         self.camera_gui.use()
         self.GameTable.tableList.draw()
@@ -133,32 +133,105 @@ class GameView(arcade.View):
         arcade.draw_text("Poupança: " + str(self.Player1.savings), 20, 60, font_size=17)
         arcade.draw_text("Dominos na mão: " + str(len(self.Player1.playerHand)), 20, 30, font_size=17)
 
+        if self.Vencedor is not None:
+            arcade.draw_text("Pressione ESC para retornar ao menu.", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.3, font_size=25, bold=True, font_name="Kenney Pixel Square")
+
+        if self.Vencedor == self.Player1:
+            arcade.draw_text("O vencedor foi o jogador 1 com R$ " + str(self.Player1.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2, font_size=32, bold=True,
+                             font_name="Kenney Pixel Square")
+        if self.Vencedor == self.Player2:
+            arcade.draw_text("O vencedor foi o jogador 2 com R$ " + str(self.Player2.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2, font_size=32, bold=True,
+                             font_name="Kenney Pixel Square")
+
     def on_update(self, deltatime):
-        if len(self.Player1.playerHand) == 0:
-            print("Jogador 1 ganhou a rodada.")
-            self.GameTable.gameRound += 1
-            for dom in self.Player2.playerHand:
-                self.Player1.savings += dom.leftFaceNum + dom.rightFaceNum
-            self.setup()
-        if len(self.Player2.playerHand) == 0:
-            print("Jogador 2 ganhou a rodada.")
-            self.GameTable.gameRound += 1
-            for dom in self.Player1.playerHand:
-                self.Player2.savings += dom.leftFaceNum + dom.rightFaceNum
-            self.setup()
-        if self.GameTable.currentPlayer == self.Player2:
-            print("Jogador 2 faz a jogada")
+        def computarJogada(domUsado):
+            self.Player2.remove_domino(domUsado)
+            self.GameTable.gamePlay += 1
             self.GameTable.currentPlayer = self.Player1
+            self.GameTable.print_list()
+
+        if len(self.Bank.bankList) == 0:
+            numDominosPossiveis = 0
+            if self.GameTable.currentPlayer == self.Player1:
+                for dom in self.Player1.playerHand:
+                    if dom.rightFaceNum == gamelist[1].leftFaceNum or dom.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
+                        numDominosPossiveis += 1
+                if numDominosPossiveis == 0:
+                    print("Jogador 1 perde")
+            if self.GameTable.currentPlayer == self.Player2:
+                for dom in self.Player2.playerHand:
+                    if dom.rightFaceNum == gamelist[1].leftFaceNum or dom.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
+                        numDominosPossiveis += 1
+                if numDominosPossiveis == 0:
+                    print("Jogador 2 perde")
+
+        if self.GameTable.gameRound > 3:
+            print("Fim de jogo")
+            self.GameTable.currentPlayer = None
+            if self.Player1.savings > self.Player2.savings: self.Vencedor = self.Player1
+            else: self.Vencedor = self.Player2
             return
 
+        if len(self.Player1.playerHand) == 0: # Verifica se o player 1 venceu a partida
+            print("Jogador 1 ganhou a rodada.")
+            self.GameTable.tableList.clear()
+            self.GameTable.gameRound += 1
+            self.GameTable.gamePlay = 0
+            for dom in self.Player2.playerHand:
+                self.Player1.savings += dom.leftFaceNum + dom.rightFaceNum
+            self.Player2.playerHand.clear()
+            self.setup()
+
+        if self.GameTable.currentPlayer == self.Player2: # Jogador 2 faz a jogada
+            print("Jogador 2 faz a jogada")
+            domUsado, placeholder = None, None
+            if self.Player2.algorithm == "GreedySearch": domUsado, placeholder = self.Player2.greedySearchHeuristic(self.GameTable.tableList, self.Bank)
+            elif self.Player2.algorithm == "AStar": domUsado, placeholder = self.Player2.aStarHeuristic(self.GameTable.tableList, self.Bank)
+            if domUsado is None and placeholder is None:
+                self.GameTable.currentPlayer = self.Player1
+                return
+            if len(self.GameTable.tableList) == 1:
+                self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
+                self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
+                placeholder.update_domino(domUsado)
+                computarJogada(domUsado)
+            else:
+                if placeholder.leftFaceNum == -2: # Jogando no começo
+                    placeholder.update_domino(domUsado)
+                    if self.GameTable.tableList[1].leftFaceNum == domUsado.leftFaceNum:
+                        print("Turn right")
+                        placeholder.reverse_domino()
+                    computarJogada(domUsado)
+                    self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
+                if placeholder.leftFaceNum == -1:  # Jogando no fim
+                    placeholder.update_domino(domUsado)
+                    if self.GameTable.tableList[len(self.GameTable.tableList) - 2].rightFaceNum == domUsado.rightFaceNum:
+                        print("Turn left")
+                        placeholder.reverse_domino()
+                    computarJogada(domUsado)
+                    self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
+            self.GameTable.currentPlayer = self.Player1
+
+        if len(self.Player2.playerHand) == 0: # Verifica se o player 2 venceu a partida depois da jogada
+            print("Jogador 2 ganhou a rodada.")
+            self.GameTable.tableList.clear()
+            self.GameTable.gameRound += 1
+            self.GameTable.gamePlay = 0
+            for dom in self.Player1.playerHand:
+                self.Player2.savings += dom.leftFaceNum + dom.rightFaceNum
+            self.Player1.playerHand.clear()
+            self.setup()
+
     def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
-        if 0 - gConst.SCREEN_HEIGHT < self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED) < gConst.SCREEN_HEIGHT:
-            self.camera_sprites.move_to((self.camera_sprites.position[0], self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED)), 1)
-            newPos = self.GameTable.cY - (scroll_y * gConst.SCROLL_SPEED)
+        if 0 - gConst.SCREEN_WIDTH * 6 < self.camera_sprites.position[0] + (scroll_y * gConst.SCROLL_SPEED) < gConst.SCREEN_WIDTH * 6:
+            self.camera_sprites.move_to((self.camera_sprites.position[0] + (scroll_y * gConst.SCROLL_SPEED), self.camera_sprites.position[1]), 1)
+            newPos = self.GameTable.cX - (scroll_y * gConst.SCROLL_SPEED)
             for dom in self.GameTable.tableList:
-                dom.center_y = newPos - (self.camera_sprites.position[1] + (scroll_y * gConst.SCROLL_SPEED))
-            self.GameTable.cY_flutuante = self.GameTable.tableList[0].center_y
+                dom.center_x = newPos - (self.camera_sprites.position[0] + (scroll_y * gConst.SCROLL_SPEED))
+            self.GameTable.cX_flutuante = self.GameTable.tableList[0].center_x
+            print(self.camera_sprites.position[0] + (scroll_y * gConst.SCROLL_SPEED))
             self.GameTable.tableList.update()
+            self.GameTable.readjustment_table_position()
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         if self.GameTable.currentPlayer == self.Player1:
@@ -182,13 +255,13 @@ class GameView(arcade.View):
         dom, distance = arcade.get_closest_sprite(self.held_domino[0], self.GameTable.tableList)
         if arcade.check_for_collision(self.held_domino[0], dom):
             if dom.leftFace == "pholder":
-                if len(self.GameTable.tableList) == 1:
+                if len(self.GameTable.tableList) == 1: # Primeira Jogada
                     self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
                     self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
                     dom.update_domino(self.held_domino[0])
                     computarJogada()
                 else:
-                    if dom.leftFaceNum == -2:
+                    if dom.leftFaceNum == -2: # Placeholder do começo
                         posDomValue = self.GameTable.tableList[1].leftFaceNum
                         if posDomValue == self.held_domino[0].leftFaceNum or posDomValue == self.held_domino[0].rightFaceNum:
                             self.GameTable.add_dom_to_start(Domino.Domino("pholder", -2, "pholder", -2, gConst.DOMINO_SCALE))
@@ -197,7 +270,7 @@ class GameView(arcade.View):
                                 print("Turn right")
                                 dom.reverse_domino()
                             computarJogada()
-                    if dom.leftFaceNum == -1:
+                    if dom.leftFaceNum == -1: # Placeholder do fim
                         posDomValue = self.GameTable.tableList[len(self.GameTable.tableList) - 2].rightFaceNum
                         if posDomValue == self.held_domino[0].leftFaceNum or posDomValue == self.held_domino[0].rightFaceNum:
                             self.GameTable.add_dom_to_end(Domino.Domino("pholder", -1, "pholder", -1, gConst.DOMINO_SCALE))
@@ -212,14 +285,23 @@ class GameView(arcade.View):
         self.held_domino = []
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
-            # Player 1 - play time
-            if self.GameTable.currentPlayer == self.Player1:
-                domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
-                if len(domino) > 0:
-                    self.Player1.desEmphasize()
-                    self.Player1.emphasize(domino[-1])
-                else:
-                    self.Player1.desEmphasize()
-                for domino in self.held_domino:
-                    domino.center_x += dx
-                    domino.center_y += dy
+        # Player 1 - play time
+        if self.GameTable.currentPlayer == self.Player1:
+            domino = arcade.get_sprites_at_point((x, y), self.Player1.playerHand)
+            if len(domino) > 0:
+                self.Player1.desEmphasize()
+                self.Player1.emphasize(domino[-1])
+            else:
+                self.Player1.desEmphasize()
+            for domino in self.held_domino:
+                domino.center_x += dx
+                domino.center_y += dy
+
+    def on_key_press(self, symbol, modifier):
+        #if symbol == arcade.key.LEFT:
+
+        #if symbol == arcade.KEY.RIGHT:
+
+        if symbol == arcade.key.ESCAPE and self.Vencedor is not None:
+            menu_view = MenuView.MenuView()
+            self.window.show_view(menu_view)

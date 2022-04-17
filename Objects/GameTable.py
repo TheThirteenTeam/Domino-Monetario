@@ -9,7 +9,7 @@ class GameTable: # Objeto Game (Lista de objetos dominos)
         self.breakLength = breakLength
         self.currentPlayer = currentPlayer
         self.cX = centerX
-        self.cY_flutuante = centerY
+        self.cX_flutuante = centerX
         self.cY = centerY
         self.gameRound = 1
         self.gamePlay = 0
@@ -43,14 +43,14 @@ class GameTable: # Objeto Game (Lista de objetos dominos)
             if len(self.tableList) % 2 == 0: # par
                 dom_at_enter = ((len(self.tableList) / 2) + .5) - 1
                 if i < dom_at_enter:
-                    dom.position = self.cX - ((dom.width + 10) * (dom_at_enter - i)), self.cY_flutuante
+                    dom.position = self.cX_flutuante - ((dom.width + 10) * (dom_at_enter - i)), self.cY
                 elif i > dom_at_enter:
-                    dom.position = self.cX + ((dom.width + 10) * (i - dom_at_enter)), self.cY_flutuante
+                    dom.position = self.cX_flutuante + ((dom.width + 10) * (i - dom_at_enter)), self.cY
             else: # impar
                 dom_at_enter = (mt.ceil(len(self.tableList) / 2) - 1)
                 if i == dom_at_enter:
-                    dom.position = self.cX, self.cY_flutuante
+                    dom.position = self.cX_flutuante, self.cY
                 elif i < dom_at_enter:
-                    dom.position = self.cX - ((dom.width + 10) * (dom_at_enter - i)), self.cY_flutuante
+                    dom.position = self.cX_flutuante - ((dom.width + 10) * (dom_at_enter - i)), self.cY
                 elif i > dom_at_enter:
-                    dom.position = self.cX + ((dom.width + 10) * (i - dom_at_enter)), self.cY_flutuante
+                    dom.position = self.cX_flutuante + ((dom.width + 10) * (i - dom_at_enter)), self.cY
