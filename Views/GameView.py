@@ -95,7 +95,7 @@ class GameView(arcade.View):
         # Configurações iniciais dos objetos
         self.Bank.set_position(gConst.BANK_X, gConst.BANK_Y)
         self.Player1.set_position(0, gConst.SCREEN_HEIGHT / 12)
-        self.Player2.set_position(0, gConst.SCREEN_HEIGHT + 50)
+        self.Player2.set_position(0, gConst.SCREEN_HEIGHT - 50)
         self.Player1.set_angle(60)
         self.Player2.set_angle(60)
         self.Bank.set_angle(90)
@@ -134,14 +134,14 @@ class GameView(arcade.View):
         arcade.draw_text("Dominos na mão: " + str(len(self.Player1.playerHand)), 20, 30, font_size=17)
 
         if self.Vencedor is not None:
-            arcade.draw_text("Pressione ESC para retornar ao menu.", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.3, font_size=25, bold=True, font_name="Kenney Pixel Square")
+            arcade.draw_text("Pressione ESC para retornar ao menu.", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.3, font_size=25, bold=True, font_name="Kenney Pixel Square", anchor_x="center")
 
         if self.Vencedor == self.Player1:
-            arcade.draw_text("O vencedor foi o jogador 1 com R$ " + str(self.Player1.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2, font_size=32, bold=True,
-                             font_name="Kenney Pixel Square")
+            arcade.draw_text("O vencedor foi o jogador 1 com R$ " + str(self.Player1.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.7, font_size=32, bold=True,
+                             font_name="Kenney Pixel Square", anchor_x="center")
         if self.Vencedor == self.Player2:
-            arcade.draw_text("O vencedor foi o jogador 2 com R$ " + str(self.Player2.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT / 2, font_size=32, bold=True,
-                             font_name="Kenney Pixel Square")
+            arcade.draw_text("O vencedor foi o jogador 2 com R$ " + str(self.Player2.savings) + ".", gConst.SCREEN_WIDTH / 2, gConst.SCREEN_HEIGHT * 0.7, font_size=32, bold=True,
+                             font_name="Kenney Pixel Square", anchor_x="center")
 
     def on_update(self, deltatime):
         def computarJogada(domUsado):
@@ -151,19 +151,23 @@ class GameView(arcade.View):
             self.GameTable.print_list()
 
         if len(self.Bank.bankList) == 0:
-            numDominosPossiveis = 0
-            if self.GameTable.currentPlayer == self.Player1:
-                for dom in self.Player1.playerHand:
-                    if dom.rightFaceNum == gamelist[1].leftFaceNum or dom.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
-                        numDominosPossiveis += 1
-                if numDominosPossiveis == 0:
-                    print("Jogador 1 perde")
-            if self.GameTable.currentPlayer == self.Player2:
+            self.GameTable.tableList.clear()
+            self.GameTable.gameRound += 1
+            self.GameTable.gamePlay = 0
+            if len(self.Player1.playerHand) == len(self.Player2.playerHand):
                 for dom in self.Player2.playerHand:
-                    if dom.rightFaceNum == gamelist[1].leftFaceNum or dom.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
-                        numDominosPossiveis += 1
-                if numDominosPossiveis == 0:
-                    print("Jogador 2 perde")
+                    self.Player1.savings += dom.leftFaceNum + dom.rightFaceNum
+                for dom in self.Player1.playerHand:
+                    self.Player2.savings += dom.leftFaceNum + dom.rightFaceNum
+            if len(self.Player1.playerHand) < len(self.Player2.playerHand):
+                for dom in self.Player2.playerHand:
+                    self.Player1.savings += dom.leftFaceNum + dom.rightFaceNum
+            if len(self.Player1.playerHand) > len(self.Player2.playerHand):
+                for dom in self.Player1.playerHand:
+                    self.Player2.savings += dom.leftFaceNum + dom.rightFaceNum
+            self.Player1.playerHand.clear()
+            self.Player2.playerHand.clear()
+            self.setup()
 
         if self.GameTable.gameRound > 3:
             print("Fim de jogo")

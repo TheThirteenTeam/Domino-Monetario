@@ -100,6 +100,64 @@ class Player: # Objeto Player (Lista de objetos dominos)
         2 - Jogar peças que já estiverem em quantidade na mesa.
         3 - Jogar a peça de valor mais alto. (É bom pro inimigo que tenha peças altas na minha mão por causa da poupança)
     '''
-    def aStarHeuristic(self, gameList, bankObj):
-        for dom in self.playerHand:
-            return
+    def aStarHeuristic(self, gamelist, bankObj):
+        def greaterDomino(listaPercorre, *args):
+            higher_pair = listaPercorre[0]
+            contDuplas = 0
+            higher_tile = listaPercorre[0]
+            if len(args) == 1:
+                dictionary = dict(zip(gConst.DOMINOS_VALUES_FLOAT, [0,0,0,0,0,0,0,0,0,0,0,0,0]))
+                print(dictionary)
+                for dom in args[0]:
+                    if dom.leftFaceNum > 0:
+                        dictionary[dom.leftFaceNum] = dictionary.get(dom.leftFaceNum) + 1
+                        dictionary[dom.rightFaceNum] = dictionary.get(dom.rightFaceNum) + 1
+                for dom in self.playerHand:
+                    if dom.leftFaceNum > 0:
+                        dictionary[dom.leftFaceNum] = dictionary.get(dom.leftFaceNum) + 1
+                        dictionary[dom.rightFaceNum] = dictionary.get(dom.rightFaceNum) + 1
+                print(dictionary)
+                melhorDomino, maiorSoma = None, -1
+                for dom in listaPercorre:
+                    if maiorSoma < dictionary.get(dom.leftFaceNum) + dictionary.get(dom.rightFaceNum):
+                        maiorSoma = dictionary.get(dom.leftFaceNum) + dictionary.get(dom.rightFaceNum)
+                        melhorDomino = dom
+                return melhorDomino
+
+            for dom in listaPercorre:
+                if higher_tile.leftFaceNum + higher_tile.rightFaceNum < dom.leftFaceNum + dom.rightFaceNum:
+                    higher_tile = dom
+                if higher_pair.leftFaceNum == higher_pair.rightFaceNum:
+                    contDuplas += 1
+                else:
+                    higher_pair = dom
+                if dom.leftFaceNum == dom.rightFaceNum and dom.leftFaceNum > higher_pair.leftFaceNum:
+                    higher_pair = dom
+            if contDuplas == 0:
+                return higher_tile
+            else:
+                return higher_pair
+
+        # Jogador 2 é o primeiro a jogar
+        if len(gamelist) == 1:
+            return greaterDomino(self.playerHand), gamelist[0]
+        # Outras jogadas do jogador 2
+        domJogado = None
+        while domJogado is None:
+            listaDominosPossiveis = []
+            for dom in self.playerHand:
+                if dom.rightFaceNum == gamelist[1].leftFaceNum or dom.rightFaceNum == gamelist[len(gamelist) - 2].rightFaceNum or \
+                    dom.leftFaceNum == gamelist[1].leftFaceNum or dom.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
+                    listaDominosPossiveis += [dom]
+            if len(listaDominosPossiveis) == 0:
+                if len(bankObj.bankList) == 0:
+                    return None, None
+                bankObj.buy_domino(self)
+                self.playerHand[len(self.playerHand) - 1].turn_domino("Down")
+                pass
+            else:
+                melhorDomino = greaterDomino(listaDominosPossiveis, gamelist)
+                if melhorDomino.leftFaceNum == gamelist[1].leftFaceNum or melhorDomino.rightFaceNum == gamelist[1].leftFaceNum:
+                    return melhorDomino, gamelist[0]
+                if melhorDomino.leftFaceNum == gamelist[len(gamelist) - 2].rightFaceNum or melhorDomino.rightFaceNum == gamelist[len(gamelist) - 2].rightFaceNum:
+                    return melhorDomino, gamelist[len(gamelist) - 1]
